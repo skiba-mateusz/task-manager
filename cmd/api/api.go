@@ -35,6 +35,7 @@ func (s *APIServer) Run() error {
 	r.Route("/v1", func(r chi.Router) {
 		r.Route("/users", func(r chi.Router) {
 			r.Post("/register", userHandler.RegisterUser)
+			r.Post("/login", userHandler.LoginUser)
 		})
 	})
 

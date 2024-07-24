@@ -6,8 +6,10 @@ import (
 )
 
 type Config struct {
-	Addr 		string
-	DB 			DBConfig
+	Addr 					string
+	JWTSecret 		string
+	JWTExpiration string
+	DB 						DBConfig
 }
 
 type DBConfig struct {
@@ -22,6 +24,8 @@ var Envs = initConfig()
 func initConfig() Config {
 	return Config{
 		Addr: getEnvString("ADDR", ":8080"),
+		JWTSecret: getEnvString("JWT_SECRET", "secret123"),
+		JWTExpiration: getEnvString("JWT_EXPIRATION", "168h"),
 		DB: DBConfig{
 			Addr: getEnvString("DB_ADDR", "postgres://root:password@localhost/taskmanager?sslmode=disable"),
 			MaxOpenConns: getEnvInt("DB_MAX_OPEN_CONNS", 30),
