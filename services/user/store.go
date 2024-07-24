@@ -4,23 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"time"
-)
 
-type UserStore interface {
-	CreateUser(User) error
-	GetUserByEmail(string) (User, error)
-}
+	"github.com/skiba-mateusz/task-manager/models"
+)
 
 type Store struct {
 	db *sql.DB
-}
-
-type User struct {
-	ID 				int64		`json:"id"`
-	Username 	string	`json:"username"`
-	Email			string	`json:"email"`
-	Password	string	`json:"-"`
-	CreatedAt string 	`json:"created_at"` 
 }
 
 func NewStore(db *sql.DB) *Store {
@@ -29,7 +18,7 @@ func NewStore(db *sql.DB) *Store {
 	}
 }
 
-func (s *Store) CreateUser(user User) error {
+func (s *Store) CreateUser(user models.User) error {
 	query := `
 		INSERT INTO users (username, email, password)
 		VALUES($1, $2, $3);
@@ -52,18 +41,44 @@ func (s *Store) CreateUser(user User) error {
 	return nil
 }
 
-func (s *Store) GetUserByEmail(email string) (User, error) {
+func (s *Store) GetUserByEmail(email string) (models.User, error) {
 	query := `
 		SELECT id, username, email, password, created_at FROM users WHERE email = $1;
 	`
 	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
 	defer cancel()
 
-	var user User
+	var user models.User
 	err := s.db.QueryRowContext(
 		ctx,
 		query,
 		email,
+	).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.Password,
+		&user.CreatedAt,
+	)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
+}
+
+func (s *Store) GetUserByID(id int) (models.User, error) {
+	query := `
+		SELECT id, username, email, password, created_at FROM users WHERE id = $1;
+	`
+	ctx, cancel := context.WithTimeout(context.Background(), 5 * time.Second)
+	defer cancel()
+
+	var user models.User
+	err := s.db.QueryRowContext(
+		ctx,
+		query,
+		id,
 	).Scan(
 		&user.ID,
 		&user.Username,

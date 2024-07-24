@@ -5,28 +5,24 @@ import (
 	"net/http"
 
 	"github.com/skiba-mateusz/task-manager/config"
+	"github.com/skiba-mateusz/task-manager/models"
 	"github.com/skiba-mateusz/task-manager/services/auth"
+
 	"github.com/skiba-mateusz/task-manager/utils"
 )
 
 type Handler struct {
-	store UserStore
+	store models.UserStore
 }
 
-func NewHandler(store UserStore) *Handler {
+func NewHandler(store models.UserStore) *Handler {
 	return &Handler{
 		store: store,
 	}
 }
 
-type RegisterUserPayload struct {
-	Username 	string	`json:"username" validate:"required"`
-	Email			string	`json:"email" validate:"required,email"`
-	Password	string	`json:"password" validate:"required,min=3,max=120"`	
-}
-
 func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
-	var payload RegisterUserPayload
+	var payload models.RegisterUserPayload
 	if err := utils.ReadJSON(w, r, &payload); err != nil {
 		utils.WriteJSONError(w, http.StatusBadRequest, err)
 		return
@@ -49,7 +45,7 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.store.CreateUser(User{
+	err = h.store.CreateUser(models.User{
 		Username: payload.Username,
 		Email: payload.Email,
 		Password: hashedPassword,
@@ -64,13 +60,9 @@ func (h *Handler) RegisterUser(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-type LoginUserPayload struct {
-	Email 		string `json:"email" validate:"required,email"`
-	Password	string	`json:"password" validate:"required,min=3,max=120"`	
-}
 
 func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
-	var payload LoginUserPayload
+	var payload models.LoginUserPayload
 	if err := utils.ReadJSON(w, r, &payload); err != nil {
 		utils.WriteJSONError(w, http.StatusBadRequest, err)
 		return
@@ -103,4 +95,9 @@ func (h *Handler) LoginUser(w http.ResponseWriter, r *http.Request) {
 		utils.WriteJSONError(w, http.StatusInternalServerError, err)
 		return
 	}
+}
+
+func (h *Handler) GetAuthenticatedUser(w http.ResponseWriter, r *http.Request) {
+	user := auth.GetUserFromContext(r.Context())
+	utils.JSONResponse(w, http.StatusOK, user)
 }
